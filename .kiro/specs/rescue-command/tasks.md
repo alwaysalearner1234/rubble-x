@@ -16,13 +16,17 @@ Status convention: `[ ]` not started, `[x]` completed only after implementation 
 
 ## Completed in this implementation
 
-- Figma tokens applied throughout: `#0B1117` bg, `#111922` panel, `#F59E0B` amber/warnings, `#38BDF8` cyan/robot, `#10B981` green/online, `#EF4444` red/danger, Inter font
-- `public/logo.png` wired into header (`<img>`) and `index.html` favicon (`<link rel="icon">`)
-- Icon+label status chips in header (online/fault/mission/operator/prototype)
-- Amber-bordered Human Approval modal (`border-2 border-amber` + amber glow shadow)
-- `SIMULATED` / `SIM` badges on every sensor card and sensor panel header
-- All HUD colour references updated to Figma tokens (Tailwind classes + inline style values)
-- 3D scene T-token object; all Three.js colours use `T.cyan`, `T.amber`, `T.red`, `T.green`
+- Figma tokens applied throughout: `#0B1117` bg, `#111922` panel, `#18222F` panel2, `#263342` border, `#F8FAFC` text-primary, `#94A3B8` text-secondary, `#F59E0B` amber, `#38BDF8` cyan, `#10B981` green, `#EF4444` red, Inter font (400/500/600/700), tabular-nums for metrics
+- `public/logo.png` wired into `MissionHeader` as `<img>` and `index.html` favicon
+- `src/components/hud/ds.tsx` — shared design primitives: `StatusChip` (icon+label tinted pill, 4 variants), `PanelHeader`, `Btn` (6 variants, `border-radius: 8px`), `ProgressBar` (Emerald/Amber/Red thresholds)
+- `TelemetryPanel` — large tabular readouts, ProgressBar per metric, StatusChip with Lucide icons, body-mode chip
+- `SensorPanel` — 5-card strip (Optical/Thermal/Acoustic/CO₂/LiDAR) each with SIMULATED chip + Lucide icon + status chip; instability in secondary row
+- `AIIntelPanel` — large % confidence gauge with 10-segment bar + level label, evidence tags with Lucide icons, route/hazard cards
+- `ControlPanel` — Lucide icons on all buttons, E-Stop toggles between solid red "EMERGENCY STOP [SPACE]" and outlined "STOP ENGAGED — RELEASE [SPACE]", fault triggers with Zap/WifiOff icons
+- `EventLog` — monospace timestamps, severity StatusChips (INFO/WARNING/CRITICAL/OK) with Lucide icons
+- `ConfirmationModal` — `1px solid #F59E0B` border, amber glow shadow, APPROVAL REQUIRED chip, risk warning summary, survivor confidence callout, Reject (secondary) + Approve and execute (solid amber)
+- `FaultBanner` — OctagonAlert/Zap/WifiOff icons, amber (fault) vs red (e-stop) styling
+- `MissionHeader` — logo.png, four status chips with Lucide icons, PROTOTYPE·SIM badge
 - `npm run build` passes with zero TypeScript or bundling errors
 
 ## Completed in this implementation

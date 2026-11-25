@@ -1,60 +1,81 @@
+import {
+  Bot, Upload, Move, Minimize2, Maximize2, Wrench,
+  ScanSearch, Hand, Zap, WifiOff, OctagonAlert, RotateCcw,
+} from 'lucide-react'
 import type { MissionState } from '../../types/rubblex'
 import { store } from '../../simulation/missionStore'
+import { Btn, PanelHeader, StatusChip } from './ds'
 
 interface Props { state: MissionState }
 
-function Btn({ children, onClick, variant = 'default', disabled = false, className = '' }: {
-  children: React.ReactNode; onClick: () => void; variant?: 'default' | 'primary' | 'danger' | 'warn'; disabled?: boolean; className?: string
-}) {
-  const base = 'border rounded-lg px-3 py-2 text-[12px] font-semibold cursor-pointer transition-all duration-100 disabled:opacity-40 disabled:cursor-not-allowed'
-  const styles: Record<string, string> = {
-    default:  'border-line bg-[#1b2a38] text-rx-text hover:border-cyan',
-    primary:  'border-amber bg-amber text-[#1b1208] hover:opacity-90',
-    danger:   'border-[#73323b] bg-[#3a1d24] text-[#ffb4b5] hover:border-red',
-    warn:     'border-amber/50 bg-[#2a2010] text-amber hover:border-amber',
-  }
-  return (
-    <button className={`${base} ${styles[variant]} ${className}`} onClick={onClick} disabled={disabled}>
-      {children}
-    </button>
-  )
-}
-
 export default function ControlPanel({ state }: Props) {
   const { robot } = state
-  const canMove = robot.deployed && !robot.stopped && !robot.fault
-  const canScan = canMove
+  const canMove  = robot.deployed && !robot.stopped && !robot.fault
+  const canScan  = canMove
   const isCompact = robot.bodyMode === 'COMPACT'
+  const isStopped = robot.stopped || robot.fault !== null
 
   return (
-    <section className="bg-panel border border-line rounded-xl overflow-hidden">
-      <div className="flex justify-between items-center px-4 py-3 border-b border-line">
-        <h2 className="text-[11px] font-semibold tracking-[1.4px] uppercase">Robot Controls</h2>
-        <span className="text-[10px] text-muted">W/A/S/D · SPACE</span>
-      </div>
+    <section className="bg-panel border border-line rounded-[12px] overflow-hidden">
+      <PanelHeader
+        title="Mission Controls"
+        right={<StatusChip variant="simulated" label="W/A/S/D · SPACE" />}
+      />
+
       <div className="p-3 space-y-3">
-        {/* deploy / mode / arm */}
+
+        {/* ── Primary actions ── */}
         <div className="grid grid-cols-2 gap-2">
-          <Btn variant="primary" onClick={() => store.deploy()} disabled={robot.deployed}>
+          <Btn
+            variant={robot.deployed ? 'ghost' : 'primary'}
+            onClick={() => store.deploy()}
+            disabled={robot.deployed}
+            Icon={robot.deployed ? Bot : Upload}
+            className="col-span-1"
+          >
             {robot.deployed ? 'Deployed' : 'Deploy Robot'}
           </Btn>
-          <Btn onClick={() => store.toggleBodyMode()} disabled={!canMove}>
-            {isCompact ? 'Extended Mode' : 'Compact Mode'}
+
+          <Btn
+            onClick={() => store.toggleBodyMode()}
+            disabled={!canMove}
+            Icon={isCompact ? Maximize2 : Minimize2}
+          >
+            {isCompact ? 'Extended' : 'Compact'}
           </Btn>
-          <Btn onClick={() => store.scan()} disabled={!canScan} className="col-span-2">
-            ◎ Run Sensor Scan
+
+          <Btn
+            onClick={() => store.scan()}
+            disabled={!canScan}
+            Icon={ScanSearch}
+            className="col-span-2"
+          >
+            Run Sensor Scan
           </Btn>
-          <Btn onClick={() => store.toggleArm()} disabled={!canMove} variant={robot.armExtended ? 'warn' : 'default'}>
+
+          <Btn
+            onClick={() => store.toggleArm()}
+            disabled={!canMove}
+            variant={robot.armExtended ? 'warn' : 'default'}
+            Icon={Wrench}
+          >
             {robot.armExtended ? 'Retract Arm' : 'Extend Arm'}
           </Btn>
-          <Btn onClick={() => store.reset()} variant="default">
-            Reset Mission
+
+          <Btn
+            onClick={() => store.reset()}
+            Icon={RotateCcw}
+          >
+            Reset
           </Btn>
         </div>
 
-        {/* d-pad */}
+        {/* ── D-pad movement ── */}
         <div>
-          <p className="text-[9px] text-muted uppercase tracking-widest mb-1.5">Movement</p>
+          <div className="flex items-center gap-2 mb-2">
+            <Move size={12} strokeWidth={2} className="text-muted" />
+            <span className="text-[9px] text-muted uppercase tracking-widest">Movement</span>
+          </div>
           <div className="grid grid-cols-3 gap-1.5 max-w-[160px] mx-auto">
             <span />
             <Btn onClick={() => store.move('forward')}  disabled={!canMove}>▲</Btn>
@@ -68,29 +89,52 @@ export default function ControlPanel({ state }: Props) {
           </div>
         </div>
 
-        {/* fault triggers */}
+        {/* ── Fault simulation ── */}
         <div>
-          <p className="text-[9px] text-muted uppercase tracking-widest mb-1.5">Fault Simulation</p>
+          <div className="flex items-center gap-2 mb-2">
+            <Zap size={12} strokeWidth={2} className="text-muted" />
+            <span className="text-[9px] text-muted uppercase tracking-widest">Fault Simulation</span>
+          </div>
           <div className="grid grid-cols-2 gap-2">
-            <Btn variant="warn" onClick={() => store.triggerFault('MOTOR_FAULT')} disabled={robot.fault !== null}>
+            <Btn
+              variant="warn"
+              onClick={() => store.triggerFault('MOTOR_FAULT')}
+              disabled={robot.fault !== null}
+              Icon={Zap}
+            >
               Motor Fault
             </Btn>
-            <Btn variant="warn" onClick={() => store.triggerFault('COMMS_LOSS')} disabled={robot.fault !== null}>
+            <Btn
+              variant="warn"
+              onClick={() => store.triggerFault('COMMS_LOSS')}
+              disabled={robot.fault !== null}
+              Icon={WifiOff}
+            >
               Comms Loss
             </Btn>
           </div>
         </div>
 
-        {/* release stop (shown when stopped/fault) */}
-        {(robot.stopped || robot.fault) && (
-          <Btn variant="default" onClick={() => store.releaseStop()} className="w-full">
-            ↺ Release Stop / Clear Fault
+        {/* release stop */}
+        {isStopped && (
+          <Btn
+            variant="ghost"
+            onClick={() => store.releaseStop()}
+            Icon={Hand}
+            className="w-full"
+          >
+            Release Stop / Clear Fault
           </Btn>
         )}
 
-        {/* E-STOP */}
-        <Btn variant="danger" onClick={() => store.emergencyStop()} className="w-full">
-          ⬛ EMERGENCY STOP
+        {/* ── Emergency Stop ── */}
+        <Btn
+          variant={isStopped ? 'danger-engaged' : 'danger'}
+          onClick={isStopped ? () => store.releaseStop() : () => store.emergencyStop()}
+          Icon={OctagonAlert}
+          className="w-full text-[13px] py-2.5"
+        >
+          {isStopped ? 'STOP ENGAGED — RELEASE [SPACE]' : 'EMERGENCY STOP [SPACE]'}
         </Btn>
 
         <p className="text-[9px] text-muted border-t border-line pt-2">

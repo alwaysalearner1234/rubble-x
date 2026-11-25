@@ -1,5 +1,7 @@
+import { OctagonAlert, Zap, WifiOff, Hand } from 'lucide-react'
 import type { MissionState } from '../../types/rubblex'
 import { store } from '../../simulation/missionStore'
+import { StatusChip } from './ds'
 
 interface Props { state: MissionState }
 
@@ -8,20 +10,37 @@ export default function FaultBanner({ state }: Props) {
   if (!robot.stopped && !robot.fault && missionPhase !== 'STOPPED') return null
 
   const isFault = robot.fault !== null
-  const color = isFault ? 'border-amber/60 bg-[#2a1a00] text-amber' : 'border-red/60 bg-[#3a0a0a] text-red'
+  const Icon = isFault
+    ? robot.fault === 'COMMS_LOSS' ? WifiOff : Zap
+    : OctagonAlert
+
   const label = isFault
-    ? `⚠ FAULT: ${robot.fault?.replace('_', ' ')} — Movement and scanning disabled.`
-    : '⬛ EMERGENCY STOP ENGAGED — Movement and scanning disabled.'
+    ? `FAULT: ${robot.fault?.replace('_', ' ')} — movement disabled`
+    : 'EMERGENCY STOP ENGAGED — movement and scanning disabled'
+
+  const cls = isFault
+    ? 'border-amber/50 bg-amber/5 text-amber'
+    : 'border-red/50 bg-red/5 text-red'
 
   return (
-    <div className={`border rounded-lg px-4 py-2.5 text-[12px] font-semibold flex justify-between items-center gap-3 ${color}`}>
-      <span>{label}</span>
-      <button
-        className="shrink-0 border border-current rounded px-2 py-1 text-[10px] hover:opacity-80 transition-opacity"
-        onClick={() => store.releaseStop()}
-      >
-        Release
-      </button>
+    <div className={`border rounded-[8px] px-4 py-2.5 flex items-center justify-between gap-3 ${cls}`}>
+      <div className="flex items-center gap-2">
+        <Icon size={16} strokeWidth={2} className="shrink-0" />
+        <span className="text-[12px] font-semibold">{label}</span>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {isFault
+          ? <StatusChip variant="warning" Icon={Zap} label="FAULT" />
+          : <StatusChip variant="critical" Icon={OctagonAlert} label="E-STOP" />
+        }
+        <button
+          className="inline-flex items-center gap-1.5 border border-current rounded-[4px] px-2.5 py-1 text-[11px] font-semibold hover:opacity-80 transition-opacity"
+          onClick={() => store.releaseStop()}
+        >
+          <Hand size={12} strokeWidth={2} />
+          Release
+        </button>
+      </div>
     </div>
   )
 }

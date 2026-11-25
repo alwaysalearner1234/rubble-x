@@ -1,65 +1,156 @@
+import { User, Thermometer, AudioWaveform, Cloud, AlertTriangle } from 'lucide-react'
 import type { MissionState } from '../../types/rubblex'
+import { StatusChip, PanelHeader, C } from './ds'
 
 interface Props { state: MissionState }
 
-function ConfidenceBar({ value }: { value: number }) {
+// ── Survivor Confidence Gauge ────────────────────────────────
+function ConfidenceGauge({ value }: { value: number }) {
   const pct = Math.round(value * 100)
-  const color = pct > 60 ? '#F59E0B' : pct > 30 ? '#38BDF8' : '#10B981'
+  // segment count
+  const SEGS = 10
+  const filled = Math.round((pct / 100) * SEGS)
+  const color  = pct > 60 ? C.amber : pct > 30 ? C.cyan : C.green
+  const level  = pct > 60 ? 'HIGH' : pct > 30 ? 'MODERATE' : 'LOW'
+  const levelVariant = pct > 60 ? 'warning' as const : pct > 30 ? 'info' as const : 'nominal' as const
+
   return (
-    <div className="mt-2">
-      <div className="flex justify-between text-[10px] mb-1">
-        <span className="text-muted">SIMULATED CONFIDENCE — ILLUSTRATIVE ONLY</span>
-        <span style={{ color }} className="font-bold">{pct}%</span>
+    <div className="space-y-2 mt-1">
+      {/* large readout */}
+      <div className="flex items-end justify-between">
+        <div>
+          <span className="text-[42px] font-bold tabular leading-none" style={{ color }}>{pct}</span>
+          <span className="text-[16px] text-muted ml-1">%</span>
+        </div>
+        <div className="text-right">
+          <StatusChip variant={levelVariant} label={`CONFIDENCE ${level}`} size="md" />
+          <p className="text-[9px] text-muted mt-1">SIMULATED · ILLUSTRATIVE ONLY</p>
+        </div>
       </div>
-      <div className="h-1.5 bg-panel2 rounded-full overflow-hidden">
-        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: color }} />
+
+      {/* segmented bar */}
+      <div className="flex gap-0.5 h-2">
+        {Array.from({ length: SEGS }).map((_, i) => (
+          <div
+            key={i}
+            className="flex-1 rounded-[2px] transition-all duration-300"
+            style={{
+              background: i < filled ? color : '#263342',
+              opacity: i < filled ? 1 : 0.4,
+            }}
+          />
+        ))}
       </div>
     </div>
   )
 }
 
+// ── Evidence tag ─────────────────────────────────────────────
+const TAG_ICONS: Record<string, typeof Thermometer> = {
+  'THERMAL-HIT':      Thermometer,
+  'ACOUSTIC-PATTERN': AudioWaveform,
+  'ELEVATED-CO₂':     Cloud,
+  'UNSTABLE-DEBRIS':  AlertTriangle,
+}
+
+function EvidenceTag({ tag }: { tag: string }) {
+  const Icon = TAG_ICONS[tag] ?? User
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] text-cyan border border-cyan/30 bg-cyan/5 rounded-[4px] px-2 py-0.5 font-semibold uppercase">
+      <Icon size={10} strokeWidth={2} />
+      {tag}
+    </span>
+  )
+}
+
+// ── Main component ───────────────────────────────────────────
 export default function AIIntelPanel({ state }: Props) {
   const { ai, survivors } = state
   const hasSurvivor = survivors.length > 0
+
   return (
-    <section className="bg-panel border border-line rounded-xl overflow-hidden">
-      <div className="flex justify-between items-center px-4 py-3 border-b border-line">
-        <h2 className="text-[11px] font-semibold tracking-[1.4px] uppercase">04 / Survivor Intelligence</h2>
-        <span className={`text-[10px] border rounded-full px-2.5 py-1 font-semibold ${hasSurvivor ? 'text-amber border-amber/40 bg-amber/5' : 'border-line text-muted'}`}>
-          {hasSurvivor ? '◆ SIGNAL DETECTED' : 'NO SIGNAL'}
-        </span>
-      </div>
+    <section className="bg-panel border border-line rounded-[12px] overflow-hidden">
+      <PanelHeader
+        section="04"
+        title="Survivor Intelligence"
+        right={
+          <StatusChip
+            variant={hasSurvivor ? 'warning' : 'default'}
+            Icon={User}
+            label={hasSurvivor ? 'SIGNAL DETECTED' : 'NO SIGNAL'}
+            pulse={hasSurvivor}
+          />
+        }
+      />
+
       <div className="p-3 space-y-3">
-        {hasSurvivor && (
-          <div className="border border-amber/30 bg-[#2a2119] rounded-lg p-3">
-            <p className="text-amber text-[11px] font-bold">◆ POSSIBLE SURVIVOR SIGNATURE</p>
-            <p className="text-[10px] text-[#c7b7a4] mt-1">
-              Simulated heat and acoustic indicators detected. This is a training event — not a real-world detection.
+        {/* survivor confidence callout */}
+        {hasSurvivor ? (
+          <div className="border border-amber/30 bg-[#1e1a0f] rounded-[8px] p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <User size={14} strokeWidth={2} className="text-amber" />
+              <span className="text-amber text-[11px] font-bold uppercase tracking-wide">Possible Survivor Signature</span>
+            </div>
+            <p className="text-[10px] text-[#c7b7a4] mb-3">
+              Simulated heat and acoustic indicators detected. Training event only — not a real-world detection.
             </p>
-            <ConfidenceBar value={ai.survivorConfidence} />
+            <ConfidenceGauge value={ai.survivorConfidence} />
+          </div>
+        ) : (
+          <div className="bg-panel2 border border-line rounded-[8px] p-3 text-center text-muted text-[11px]">
+            <User size={20} strokeWidth={1.5} className="mx-auto mb-1 opacity-30" />
+            Deploy robot and run a scan to detect survivor signatures.
           </div>
         )}
-        <div className="bg-panel2 border border-line rounded-lg p-2.5 text-[11px]">
-          <span className="text-muted text-[9px] uppercase tracking-widest block mb-1">Recommended Mode</span>
-          <span className="text-cyan font-bold">{ai.recommendedMode}</span>
+
+        {/* recommendations */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-panel2 border border-line rounded-[8px] p-2.5">
+            <span className="text-[9px] text-muted uppercase tracking-widest block mb-1">Recommended Mode</span>
+            <span className="text-cyan text-[12px] font-bold">{ai.recommendedMode}</span>
+          </div>
+          <div className="bg-panel2 border border-line rounded-[8px] p-2.5">
+            <span className="text-[9px] text-muted uppercase tracking-widest block mb-1">Hazard Level</span>
+            <span
+              className="text-[12px] font-bold"
+              style={{ color: ai.hazardSummary.includes('High') ? C.red : C.muted }}
+            >
+              {ai.hazardSummary.includes('High') ? 'HIGH' : 'MODERATE'}
+            </span>
+          </div>
         </div>
-        <div className="bg-panel2 border border-line rounded-lg p-2.5 text-[11px]">
-          <span className="text-muted text-[9px] uppercase tracking-widest block mb-1">Route Guidance</span>
-          <span className="text-rx-text">{ai.recommendedRoute}</span>
+
+        {/* route guidance */}
+        <div className="bg-panel2 border border-line rounded-[8px] p-2.5">
+          <span className="text-[9px] text-muted uppercase tracking-widest block mb-1">Route Guidance</span>
+          <span className="text-rx-text text-[11px]">{ai.recommendedRoute}</span>
         </div>
-        <div className="bg-panel2 border border-line rounded-lg p-2.5 text-[11px]">
-          <span className="text-muted text-[9px] uppercase tracking-widest block mb-1">Hazard Summary</span>
-          <span className={ai.hazardSummary.includes('High') ? 'text-red' : 'text-rx-text'}>{ai.hazardSummary}</span>
+
+        {/* hazard summary */}
+        <div className="bg-panel2 border border-line rounded-[8px] p-2.5 flex items-start gap-2">
+          <AlertTriangle
+            size={14}
+            strokeWidth={2}
+            style={{ color: ai.hazardSummary.includes('High') ? C.red : C.muted }}
+            className="mt-0.5 shrink-0"
+          />
+          <span
+            className="text-[11px]"
+            style={{ color: ai.hazardSummary.includes('High') ? C.red : C.muted }}
+          >
+            {ai.hazardSummary}
+          </span>
         </div>
+
+        {/* evidence tags */}
         {ai.evidenceTags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {ai.evidenceTags.map(tag => (
-              <span key={tag} className="text-[10px] text-cyan border border-cyan/30 rounded px-1.5 py-0.5">{tag}</span>
-            ))}
+            {ai.evidenceTags.map(tag => <EvidenceTag key={tag} tag={tag} />)}
           </div>
         )}
+
         <p className="text-[9px] text-muted border-t border-line pt-2">
-          AI-style alerts are advisory only. A trained rescue professional must verify all findings.
+          AI-style alerts are advisory only. A trained rescue professional must verify all findings before acting.
         </p>
       </div>
     </section>

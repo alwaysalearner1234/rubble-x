@@ -1,12 +1,17 @@
+import { Info, AlertTriangle, OctagonAlert, CheckCircle } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import type { MissionState, MissionEvent } from '../../types/rubblex'
+import { StatusChip, PanelHeader } from './ds'
 
 interface Props { state: MissionState }
 
-function levelColor(level: MissionEvent['level']) {
-  if (level === 'danger')  return '#ff5e62'
-  if (level === 'warn')    return '#ff9d42'
-  if (level === 'success') return '#53d69a'
-  return '#91a2b3'
+type ChipVariant = 'nominal' | 'warning' | 'critical' | 'info' | 'default'
+
+function levelChip(level: MissionEvent['level']): { variant: ChipVariant; Icon: LucideIcon; label: string } {
+  if (level === 'danger')  return { variant: 'critical', Icon: OctagonAlert, label: 'CRITICAL' }
+  if (level === 'warn')    return { variant: 'warning',  Icon: AlertTriangle, label: 'WARNING'  }
+  if (level === 'success') return { variant: 'nominal',  Icon: CheckCircle,   label: 'OK'       }
+  return                          { variant: 'info',     Icon: Info,          label: 'INFO'     }
 }
 
 function fmtTime(ts: number) {
@@ -15,18 +20,23 @@ function fmtTime(ts: number) {
 
 export default function EventLog({ state }: Props) {
   return (
-    <section className="bg-panel border border-line rounded-xl overflow-hidden flex flex-col">
-      <div className="flex justify-between items-center px-4 py-3 border-b border-line shrink-0">
-        <h2 className="text-[11px] font-semibold tracking-[1.4px] uppercase">06 / Mission Event Log</h2>
-        <span className="text-[10px] text-muted">LOCAL SESSION</span>
-      </div>
-      <div className="overflow-y-auto max-h-52 px-3 py-2 space-y-0 flex-1">
-        {state.events.map(ev => (
-          <div key={ev.id} className="py-1.5 border-b border-[#22313e] text-[11px]">
-            <time className="text-[#6f8497] mr-2 text-[10px]">{fmtTime(ev.timestamp)}</time>
-            <span style={{ color: levelColor(ev.level) }} className="font-semibold">{ev.message}</span>
-          </div>
-        ))}
+    <section className="bg-panel border border-line rounded-[12px] overflow-hidden flex flex-col">
+      <PanelHeader
+        section="06"
+        title="Mission Event Log"
+        right={<span className="text-[10px] text-muted">LOCAL SESSION</span>}
+      />
+      <div className="overflow-y-auto max-h-56 flex-1">
+        {state.events.map(ev => {
+          const { variant, Icon, label } = levelChip(ev.level)
+          return (
+            <div key={ev.id} className="flex items-start gap-2 px-3 py-2 border-b border-line/60 hover:bg-panel2/50 transition-colors">
+              <time className="font-mono text-[10px] text-muted shrink-0 mt-0.5 tabular">{fmtTime(ev.timestamp)}</time>
+              <StatusChip variant={variant} Icon={Icon} label={label} />
+              <span className="text-[11px] text-rx-text flex-1 leading-snug">{ev.message}</span>
+            </div>
+          )
+        })}
       </div>
     </section>
   )

@@ -1,42 +1,104 @@
+import { Eye, Thermometer, AudioWaveform, Cloud, Radio } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import type { MissionState, SensorReading } from '../../types/rubblex'
+import { StatusChip, PanelHeader, C } from './ds'
 
 interface Props { state: MissionState }
 
-function statusColor(status: SensorReading['status']) {
-  if (status === 'SIGNAL' || status === 'PATTERN') return '#F59E0B'  // amber
-  if (status === 'WARNING') return '#EF4444'  // red
-  if (status === 'ERROR')   return '#EF4444'  // red
-  if (status === 'ACTIVE')  return '#38BDF8'  // cyan
-  return '#91a2b3'
+// Map each sensor to a Lucide icon
+const SENSOR_ICONS: Record<string, LucideIcon> = {
+  OPTICAL:     Eye,
+  THERMAL:     Thermometer,
+  ACOUSTIC:    AudioWaveform,
+  'CO₂':       Cloud,
+  INSTABILITY: Radio,
+  LIDAR:       Radio,
+}
+
+function statusVariant(s: SensorReading['status']): 'nominal' | 'warning' | 'critical' | 'simulated' | 'active' | 'default' {
+  if (s === 'SIGNAL' || s === 'PATTERN') return 'warning'
+  if (s === 'WARNING')  return 'warning'
+  if (s === 'ERROR')    return 'critical'
+  if (s === 'ACTIVE')   return 'active'
+  return 'default'
+}
+
+function readingColor(s: SensorReading['status']): string {
+  if (s === 'SIGNAL' || s === 'PATTERN') return C.amber
+  if (s === 'WARNING' || s === 'ERROR')  return C.red
+  if (s === 'ACTIVE')                    return C.cyan
+  return C.muted
 }
 
 function SensorCard({ reading }: { reading: SensorReading }) {
-  const color = statusColor(reading.status)
-  const val = typeof reading.value === 'number' ? `${reading.value} ${reading.unit}` : String(reading.value)
+  const color = readingColor(reading.status)
+  const val   = typeof reading.value === 'number'
+    ? `${reading.value}`
+    : String(reading.value)
+  const Icon = SENSOR_ICONS[reading.label] ?? Eye
+
   return (
-    <div className="bg-panel2 border border-line rounded-lg p-2.5">
-      <div className="flex justify-between items-center">
-        <span className="text-[11px] font-semibold">{reading.label}</span>
-        <span className="text-[9px] border border-line rounded px-1 py-0.5 text-muted">SIM</span>
+    <div className="bg-panel2 border border-line rounded-[8px] p-2.5 flex flex-col gap-1.5">
+      {/* header row */}
+      <div className="flex items-center justify-between gap-1">
+        <div className="flex items-center gap-1.5">
+          <Icon size={12} strokeWidth={2} style={{ color }} />
+          <span className="text-[11px] font-semibold text-rx-text">{reading.label}</span>
+        </div>
+        <StatusChip variant="simulated" label="SIM" />
       </div>
-      <span className="text-[10px] text-muted block">{reading.unit}</span>
-      <strong className="block mt-1.5 text-base" style={{ color }}>{val}</strong>
-      <span className="text-[9px]" style={{ color }}>{reading.status}</span>
+
+      {/* value */}
+      <div className="flex items-baseline gap-1">
+        <strong className="text-[20px] font-bold tabular leading-none" style={{ color }}>{val}</strong>
+        {typeof reading.value === 'number' && (
+          <span className="text-[10px] text-muted">{reading.unit}</span>
+        )}
+      </div>
+
+      {/* status chip */}
+      <StatusChip variant={statusVariant(reading.status)} label={reading.status} size="sm" />
     </div>
   )
 }
 
 export default function SensorPanel({ state }: Props) {
   const { sensors } = state
-  const all = [sensors.optical, sensors.thermal, sensors.acoustic, sensors.co2, sensors.instability, sensors.lidar]
+  // 5-sensor strip per spec (drop instability, keep the main five)
+  const five = [
+    sensors.optical,
+    sensors.thermal,
+    sensors.acoustic,
+    sensors.co2,
+    sensors.lidar,
+  ]
+
   return (
-    <section className="bg-panel border border-line rounded-xl overflow-hidden">
-      <div className="flex justify-between items-center px-4 py-3 border-b border-line">
-        <h2 className="text-[11px] font-semibold tracking-[1.4px] uppercase">03 / Sensor Intelligence</h2>
-        <span className="text-[10px] border border-line rounded-full px-2 py-0.5 text-muted">SIMULATED INPUTS</span>
+    <section className="bg-panel border border-line rounded-[12px] overflow-hidden">
+      <PanelHeader
+        section="03"
+        title="Sensor Intelligence"
+        right={<StatusChip variant="simulated" label="SIMULATED INPUTS" />}
+      />
+      {/* 5-card responsive strip */}
+      <div className="grid grid-cols-5 gap-2 p-3 min-[500px]:grid-cols-5">
+        {five.map(r => <SensorCard key={r.label} reading={r} />)}
       </div>
-      <div className="grid grid-cols-3 gap-2 p-3">
-        {all.map(r => <SensorCard key={r.label} reading={r} />)}
+      {/* instability as a secondary row */}
+      <div className="px-3 pb-3">
+        <div className="bg-panel2 border border-line rounded-[8px] px-3 py-2 flex items-center gap-3">
+          <span className="text-[10px] text-muted uppercase tracking-widest">Structural Instability</span>
+          <strong className="tabular text-[14px] font-bold" style={{
+            color: Number(sensors.instability.value) > 5 ? C.red : C.muted,
+          }}>
+            {sensors.instability.value} <span className="text-[10px] font-normal text-muted">{sensors.instability.unit}</span>
+          </strong>
+          <StatusChip
+            variant={sensors.instability.status === 'WARNING' ? 'warning' : 'default'}
+            label={sensors.instability.status}
+          />
+          <StatusChip variant="simulated" label="SIM" />
+        </div>
       </div>
     </section>
   )

@@ -2,17 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Figma design tokens ── */
 :root {
-  --bg:     #0B1117;
-  --panel:  #111922;
-  --panel2: #172330;
-  --line:   #1E3040;
-  --muted:  #91a2b3;
-  --text:   #edf4f8;
-  --cyan:   #38BDF8;
-  --orange: #F59E0B;
-  --red:    #EF4444;
-  --green:  #10B981;
+  --bg:      #0B1117;
+  --panel:   #111922;
+  --panel2:  #18222F;
+  --line:    #263342;
+  --muted:   #94A3B8;
+  --text:    #F8FAFC;
+  --amber:   #F59E0B;
+  --cyan:    #38BDF8;
+  --green:   #10B981;
+  --red:     #EF4444;
+  /* radii */
+  --r-chip:  4px;
+  --r-btn:   8px;
+  --r-panel: 12px;
 }
 
 * { box-sizing: border-box; }
@@ -22,18 +27,21 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial;
+  font-size: 14px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Scrollbar styling */
+/* Tabular nums for all telemetry/metric readouts */
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--panel); }
 ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #3a5060; }
 
-/* responsive two-column → single column below 900px */
+/* Responsive two-column → single column */
 @media (max-width: 900px) {
-  main {
-    grid-template-columns: 1fr !important;
-  }
+  main { grid-template-columns: 1fr !important; }
 }

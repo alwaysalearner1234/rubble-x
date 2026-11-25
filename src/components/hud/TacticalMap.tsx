@@ -48,7 +48,7 @@ export default function TacticalMap({ state }: Props) {
       const r = hz.radius * (cw / (WORLD_HALF * 2))
       ctx.beginPath(); ctx.arc(cx2, cy2, r, 0, Math.PI * 2)
       ctx.fillStyle = '#ff5e6230'; ctx.fill()
-      ctx.strokeStyle = '#ff5e62'; ctx.lineWidth = 1; ctx.stroke()
+      ctx.strokeStyle = '#EF4444'; ctx.lineWidth = 1; ctx.stroke()
     })
     // explored path
     const path = state.robot.pathHistory
@@ -71,9 +71,9 @@ export default function TacticalMap({ state }: Props) {
       ctx.beginPath(); ctx.arc(bx, cy2, 5, 0, Math.PI * 2)
       ctx.fillStyle = detected ? '#F59E0B' : '#8b6a3a'; ctx.fill()
       if (detected) {
-        ctx.strokeStyle = '#FF9D42'; ctx.lineWidth = 2
+        ctx.strokeStyle = '#F59E0B'; ctx.lineWidth = 2
         ctx.beginPath(); ctx.arc(bx, cy2, 9, 0, Math.PI * 2); ctx.stroke()
-        ctx.fillStyle = '#FF9D42'; ctx.font = '9px Inter,sans-serif'
+        ctx.fillStyle = '#F59E0B'; ctx.font = '9px Inter,sans-serif'
         ctx.fillText('POSSIBLE SURVIVOR', bx + 11, cy2 + 3)
       }
     })
@@ -82,7 +82,7 @@ export default function TacticalMap({ state }: Props) {
       const { x, z } = state.robot.position
       const [rx, ry] = worldToCanvas(x, z, cw, ch)
       ctx.beginPath(); ctx.arc(rx, ry, 5, 0, Math.PI * 2)
-      const rColor = state.robot.stopped ? '#ff5e62' : '#48d6e8'
+      const rColor = state.robot.stopped ? '#EF4444' : '#38BDF8'
       ctx.fillStyle = rColor; ctx.fill()
       ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke()
       // heading arrow
@@ -111,7 +111,7 @@ export default function TacticalMap({ state }: Props) {
           <span className="text-[#4a5a65]">▰ RUBBLE</span>
           <span className="text-[#c0683a]">▰ UNSTABLE</span>
           <span className="text-cyan">● ROBOT</span>
-          <span className="text-orange">◆ SURVIVOR</span>
+          <span className="text-amber">◆ SURVIVOR</span>
           <span className="text-red">● HAZARD</span>
         </div>
         <p className="text-[9px] text-muted mt-1">Simulated positions only. No real GPS or structural data.</p>
