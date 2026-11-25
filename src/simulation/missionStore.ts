@@ -4,7 +4,8 @@
 // ============================================================
 import type {
   MissionState, RobotState, SensorBundle, AIIntelligence,
-  MissionEvent, BodyMode, FaultTrigger, SurvivorSignal
+  MissionEvent, BodyMode, FaultTrigger, SurvivorSignal,
+  ModulePod, MedicalReachback, ApprovalRecord, MissionReport
 } from '../types/rubblex'
 import { SPAWN_POSITION, OBSTACLES, HAZARD_ZONES, ROBOT_BODY, SURVIVOR_BEACONS } from './worldConfig'
 
@@ -60,6 +61,26 @@ function initialState(): MissionState {
     missionProgress: 0,
     debrisRequest: { pending: false, description: '', confirmed: null },
     tick: 0,
+    moduleBay: { docked: 'DETACHED', dockingAt: null },
+    medicalReachback: {
+      unlocked: false,
+      doctorRelayActive: false,
+      doctorRelayConnectedAt: null,
+      suppliesDelivered: false,
+      supplyDeliveryRequest: { pending: false, confirmed: null },
+      patientAssessment: {
+        postureStatus: '—',
+        responsiveness: '—',
+        thermalReading: '—',
+        respiratoryRate: '—',
+        generatedAt: null,
+      },
+    },
+    approvalLog: [],
+    deploymentStartedAt: null,
+    debrisInterventionCount: 0,
+    transformationEvents: [],
+    dockingEvents: [],
   }
 }
 
@@ -132,9 +153,12 @@ class MissionStore {
   deploy() {
     if (this.state.robot.deployed) return
     const robot: RobotState = { ...this.state.robot, deployed: true, stopped: false, fault: null }
+    const transformationEvents = [...this.state.transformationEvents, `${new Date().toISOString()} — Robot deployed`]
     this.set({
       robot,
       missionPhase: 'DEPLOYED',
+      deploymentStartedAt: Date.now(),
+      transformationEvents,
       events: addEvent(this.state, 'Robot deployed into simulated environment.', 'success'),
     })
   }
@@ -188,8 +212,10 @@ class MissionStore {
     const { robot } = this.state
     if (!robot.deployed || robot.stopped || robot.fault) return
     const newMode: BodyMode = robot.bodyMode === 'EXPLORATION' ? 'COMPACT' : 'EXPLORATION'
+    const transformationEvents = [...this.state.transformationEvents, `${new Date().toISOString()} — Body mode → ${newMode}`]
     this.set({
       robot: { ...robot, bodyMode: newMode },
+      transformationEvents,
       events: addEvent(this.state, `Body mode switched to ${newMode}.`, 'info'),
     })
   }
@@ -199,10 +225,14 @@ class MissionStore {
     if (!robot.deployed || robot.stopped || robot.fault) return
     const armExtended = !robot.armExtended
     if (armExtended) {
-      // Human-in-the-loop: request confirmation before extending arm into debris
+      // Human-in-the-loop: request confirmation — loose, non-structural debris only
       this.set({
-        debrisRequest: { pending: true, description: 'Extend manipulator arm toward debris field. Confirm operator-approved action.', confirmed: null },
-        events: addEvent(this.state, 'Awaiting operator confirmation before arm extension.', 'warn'),
+        debrisRequest: {
+          pending: true,
+          description: 'Extend manipulator arm to displace loose, non-structural debris only. This action requires operator approval. RUBBLE-X must not engage load-bearing or structural elements.',
+          confirmed: null
+        },
+        events: addEvent(this.state, 'Awaiting operator confirmation before arm extension (loose debris only).', 'warn'),
       })
     } else {
       this.set({
@@ -214,16 +244,26 @@ class MissionStore {
 
   confirmDebrisAction(approved: boolean) {
     const { robot } = this.state
+    const record: ApprovalRecord = {
+      id: `apr-${Date.now()}`,
+      timestamp: Date.now(),
+      action: 'Arm extension — loose non-structural debris manipulation',
+      approved,
+      operatorNote: approved ? 'Operator confirmed' : 'Operator rejected',
+    }
     if (approved) {
       this.set({
         robot: { ...robot, armExtended: true },
         debrisRequest: { pending: false, description: '', confirmed: true },
-        events: addEvent(this.state, 'Operator approved — manipulator arm extended.', 'success'),
+        debrisInterventionCount: this.state.debrisInterventionCount + 1,
+        approvalLog: [record, ...this.state.approvalLog],
+        events: addEvent(this.state, 'Operator approved — manipulator arm extended (loose debris only).', 'success'),
       })
     } else {
       this.set({
         debrisRequest: { pending: false, description: '', confirmed: false },
-        events: addEvent(this.state, 'Operator cancelled arm extension.', 'info'),
+        approvalLog: [record, ...this.state.approvalLog],
+        events: addEvent(this.state, 'Operator rejected arm extension.', 'info'),
       })
     }
   }
@@ -276,14 +316,133 @@ class MissionStore {
       }
       survivors = [sv]
     }
+    // Unlock medical reachback once a survivor is detected
+    const medUnlocked = confidence > 0.25
+    const medicalReachback: MedicalReachback = {
+      ...this.state.medicalReachback,
+      unlocked: this.state.medicalReachback.unlocked || medUnlocked,
+      patientAssessment: medUnlocked && !this.state.medicalReachback.unlocked ? {
+        postureStatus: 'Supine — motionless (SIM)',
+        responsiveness: 'Unresponsive to verbal stimulus (SIM)',
+        thermalReading: `${(36 + confidence * 2).toFixed(1)} °C (SIM)`,
+        respiratoryRate: `${Math.round(10 + confidence * 8)} bpm (SIM)`,
+        generatedAt: now,
+      } : this.state.medicalReachback.patientAssessment,
+    }
+
     const level: MissionEvent['level'] = confidence > 0.5 ? 'warn' : 'info'
     this.set({
       sensors,
       ai,
       survivors,
+      medicalReachback,
       missionPhase: confidence > 0.25 ? 'ALERT' : 'DEPLOYED',
       events: addEvent(this.state, `Scan complete — simulated confidence ${Math.round(confidence * 100)}%. ${tags.join(', ') || 'No strong signatures.'}`, level),
     })
+  }
+
+  // ── Module Bay ───────────────────────────────────────────
+  dockModule(pod: ModulePod) {
+    const label = pod === 'DETACHED' ? 'Module detached' : `${pod.replace('_', ' ')} docked`
+    const dockingEvents = [...this.state.dockingEvents, `${new Date().toISOString()} — ${label}`]
+    this.set({
+      moduleBay: { docked: pod, dockingAt: Date.now() },
+      dockingEvents,
+      events: addEvent(this.state, `Module bay: ${label}.`, 'info'),
+    })
+  }
+
+  // ── Medical Reachback ────────────────────────────────────
+  toggleDoctorRelay() {
+    const mr = this.state.medicalReachback
+    if (!mr.unlocked) return
+    const active = !mr.doctorRelayActive
+    this.set({
+      medicalReachback: {
+        ...mr,
+        doctorRelayActive: active,
+        doctorRelayConnectedAt: active ? Date.now() : mr.doctorRelayConnectedAt,
+      },
+      events: addEvent(
+        this.state,
+        active ? 'Remote Medical Professional relay connected (SIM).' : 'Doctor relay disconnected.',
+        active ? 'success' : 'info',
+      ),
+    })
+  }
+
+  requestSupplyDelivery() {
+    const mr = this.state.medicalReachback
+    if (!mr.unlocked || this.state.moduleBay.docked !== 'MEDICAL_POD') return
+    // HitL approval required
+    this.set({
+      medicalReachback: { ...mr, supplyDeliveryRequest: { pending: true, confirmed: null } },
+      debrisRequest: {
+        pending: true,
+        description: 'Deploy first-aid kit from MEDICAL POD to survivor location. First-aid supplies only — no surgical or clinical actions. Requires operator approval.',
+        confirmed: null,
+      },
+      events: addEvent(this.state, 'Awaiting operator approval to deliver first-aid supplies.', 'warn'),
+    })
+  }
+
+  confirmSupplyDelivery(approved: boolean) {
+    const mr = this.state.medicalReachback
+    const record: ApprovalRecord = {
+      id: `apr-${Date.now()}`,
+      timestamp: Date.now(),
+      action: 'First-aid supply delivery from MEDICAL POD',
+      approved,
+      operatorNote: approved ? 'Operator approved supply delivery' : 'Operator rejected supply delivery',
+    }
+    this.set({
+      medicalReachback: {
+        ...mr,
+        suppliesDelivered: approved ? true : mr.suppliesDelivered,
+        supplyDeliveryRequest: { pending: false, confirmed: approved },
+      },
+      debrisRequest: { pending: false, description: '', confirmed: approved },
+      approvalLog: [record, ...this.state.approvalLog],
+      events: addEvent(
+        this.state,
+        approved ? 'First-aid supplies delivered to survivor location (SIM).' : 'Supply delivery rejected by operator.',
+        approved ? 'success' : 'info',
+      ),
+    })
+  }
+
+  // ── Mission Report ───────────────────────────────────────
+  generateReport(): MissionReport {
+    const s = this.state
+    const deployDuration = s.deploymentStartedAt
+      ? Math.round((Date.now() - s.deploymentStartedAt) / 1000)
+      : 0
+    return {
+      missionId: 'RX-042',
+      generatedAt: Date.now(),
+      deploymentStartedAt: s.deploymentStartedAt,
+      deploymentDurationSec: deployDuration,
+      distanceTravelledM: +s.robot.distanceTravelled.toFixed(2),
+      cellsExplored: s.robot.exploredCells.size,
+      missionProgress: s.missionProgress,
+      transformationEvents: s.transformationEvents,
+      dockingEvents: s.dockingEvents,
+      survivorSignals: s.survivors.map(sv => ({
+        id: sv.id,
+        confidence: sv.confidence,
+        position: sv.position,
+        thermalEvidence: sv.thermalEvidence,
+        acousticEvidence: sv.acousticEvidence,
+        confirmedByOperator: sv.confirmedByOperator,
+      })),
+      medicalReachback: {
+        doctorRelayUsed: s.medicalReachback.doctorRelayActive || s.medicalReachback.doctorRelayConnectedAt !== null,
+        suppliesDelivered: s.medicalReachback.suppliesDelivered,
+      },
+      debrisInterventions: s.debrisInterventionCount,
+      approvalAuditLog: s.approvalLog,
+      disclaimer: 'SIMULATED DATA — This report is generated from a software prototype and does not represent real-world operations, confirmed survivor detections, or validated medical assessments.',
+    }
   }
 
   confirmSurvivor(id: string) {

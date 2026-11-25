@@ -7,6 +7,71 @@ export type BodyMode = 'EXPLORATION' | 'COMPACT'
 
 export type FaultType = 'MOTOR_FAULT' | 'COMMS_LOSS' | null
 
+// ── Magnetic Module Bay ──────────────────────────────────────
+export type ModulePod = 'DETACHED' | 'MEDICAL_POD' | 'DEBRIS_GRIPPER_POD'
+
+export interface ModuleBay {
+  docked: ModulePod
+  dockingAt: number | null   // timestamp of last dock/detach
+}
+
+// ── Medical Reachback ────────────────────────────────────────
+export interface MedicalReachback {
+  unlocked: boolean          // true once a survivor is located
+  doctorRelayActive: boolean
+  doctorRelayConnectedAt: number | null
+  suppliesDelivered: boolean
+  supplyDeliveryRequest: {
+    pending: boolean
+    confirmed: boolean | null
+  }
+  // simulated patient assessment (explicitly NOT a diagnosis)
+  patientAssessment: {
+    postureStatus: string      // e.g. "Supine — motionless (SIM)"
+    responsiveness: string     // e.g. "Unresponsive (SIM)"
+    thermalReading: string     // e.g. "36.4 °C (SIM)"
+    respiratoryRate: string    // e.g. "14 bpm (SIM)"
+    generatedAt: number | null
+  }
+}
+
+// ── Approval audit log entry ─────────────────────────────────
+export interface ApprovalRecord {
+  id: string
+  timestamp: number
+  action: string
+  approved: boolean
+  operatorNote: string
+}
+
+// ── Mission Report ───────────────────────────────────────────
+export interface MissionReport {
+  missionId: string
+  generatedAt: number
+  deploymentStartedAt: number | null
+  deploymentDurationSec: number
+  distanceTravelledM: number
+  cellsExplored: number
+  missionProgress: number
+  transformationEvents: string[]
+  dockingEvents: string[]
+  survivorSignals: Array<{
+    id: string
+    confidence: number
+    position: [number, number, number]
+    thermalEvidence: boolean
+    acousticEvidence: boolean
+    confirmedByOperator: boolean
+  }>
+  medicalReachback: {
+    doctorRelayUsed: boolean
+    suppliesDelivered: boolean
+  }
+  debrisInterventions: number
+  approvalAuditLog: ApprovalRecord[]
+  disclaimer: string
+}
+
 export interface RobotPosition {
   x: number  // world-space
   y: number
@@ -92,4 +157,12 @@ export interface MissionState {
   missionProgress: number  // 0–100
   debrisRequest: DebrisManipulationRequest
   tick: number  // sim frame counter
+  // new fields
+  moduleBay: ModuleBay
+  medicalReachback: MedicalReachback
+  approvalLog: ApprovalRecord[]
+  deploymentStartedAt: number | null
+  debrisInterventionCount: number
+  transformationEvents: string[]
+  dockingEvents: string[]
 }

@@ -6,8 +6,13 @@ import { StatusChip } from './ds'
 interface Props { state: MissionState }
 
 export default function ConfirmationModal({ state }: Props) {
-  const { debrisRequest, ai } = state
+  const { debrisRequest, medicalReachback, ai } = state
   if (!debrisRequest.pending) return null
+
+  // Route approval to the right store method
+  const isSupplyDelivery = medicalReachback.supplyDeliveryRequest.pending
+  const handleApprove = () => isSupplyDelivery ? store.confirmSupplyDelivery(true)  : store.confirmDebrisAction(true)
+  const handleReject  = () => isSupplyDelivery ? store.confirmSupplyDelivery(false) : store.confirmDebrisAction(false)
 
   const pct = Math.round(ai.survivorConfidence * 100)
 
@@ -78,7 +83,7 @@ export default function ConfirmationModal({ state }: Props) {
           {/* secondary Reject */}
           <button
             className="flex-1 inline-flex items-center justify-center gap-2 border border-line bg-panel2 text-muted rounded-[8px] px-4 py-2.5 text-[12px] font-semibold hover:border-red hover:text-red transition-colors"
-            onClick={() => store.confirmDebrisAction(false)}
+            onClick={handleReject}
           >
             <XCircle size={14} strokeWidth={2} />
             Reject
@@ -87,7 +92,7 @@ export default function ConfirmationModal({ state }: Props) {
           {/* solid amber Approve */}
           <button
             className="flex-1 inline-flex items-center justify-center gap-2 border border-amber bg-amber text-[#1b1208] rounded-[8px] px-4 py-2.5 text-[12px] font-bold hover:opacity-90 transition-opacity"
-            onClick={() => store.confirmDebrisAction(true)}
+            onClick={handleApprove}
           >
             <CheckCircle size={14} strokeWidth={2} />
             Approve and execute

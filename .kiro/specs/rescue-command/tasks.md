@@ -46,3 +46,14 @@ Status convention: `[ ]` not started, `[x]` completed only after implementation 
 - Responsive layout (desktop two-column, mobile single-column)
 - Prototype disclaimer footer
 - `npm run build` passes with zero TypeScript or bundling errors
+
+## Extended in this pass (modular rescue workflow)
+
+- `src/types/rubblex.ts` — added `ModulePod`, `ModuleBay`, `MedicalReachback`, `ApprovalRecord`, `MissionReport` types; extended `MissionState` with `moduleBay`, `medicalReachback`, `approvalLog`, `deploymentStartedAt`, `debrisInterventionCount`, `transformationEvents`, `dockingEvents`
+- `src/simulation/missionStore.ts` — added `dockModule()`, `toggleDoctorRelay()`, `requestSupplyDelivery()`, `confirmSupplyDelivery()`, `generateReport()`; debris confirmation now writes to `approvalLog`; body mode changes log to `transformationEvents`; scan unlocks `medicalReachback` with simulated patient assessment
+- `src/components/hud/ModuleBaySelector.tsx` — docks MEDICAL_POD / DEBRIS_GRIPPER_POD / DETACHED with scope guardrail banner
+- `src/components/hud/MedicalReachbackPanel.tsx` — patient assessment (SIM, NOT A DIAGNOSIS), doctor relay toggle, first-aid supply delivery (HitL modal), confidence callout
+- `src/components/hud/MissionReportModal.tsx` — structured JSON report: deployment, transformation/docking events, survivor signals, medical reachback, debris interventions, approval audit log; Copy JSON + Download JSON
+- `src/components/hud/ConfirmationModal.tsx` — routes approval to correct store method (debris vs supply delivery)
+- `src/App.tsx` — 6-view filter nav (All Command / Mission Control / Robot & Transform / Sensors & Detection / Rescue & Medical / Mission Report); scope guardrails bar; Generate Report button in header; panels shown/hidden per active view
+- `npm run build` passes with zero TypeScript or CSS errors
