@@ -4,7 +4,7 @@ interface Props { state: MissionState }
 
 function ConfidenceBar({ value }: { value: number }) {
   const pct = Math.round(value * 100)
-  const color = pct > 60 ? '#ff9d42' : pct > 30 ? '#48d6e8' : '#53d69a'
+  const color = pct > 60 ? '#F59E0B' : pct > 30 ? '#38BDF8' : '#10B981'
   return (
     <div className="mt-2">
       <div className="flex justify-between text-[10px] mb-1">
@@ -25,14 +25,14 @@ export default function AIIntelPanel({ state }: Props) {
     <section className="bg-panel border border-line rounded-xl overflow-hidden">
       <div className="flex justify-between items-center px-4 py-3 border-b border-line">
         <h2 className="text-[11px] font-semibold tracking-[1.4px] uppercase">04 / Survivor Intelligence</h2>
-        <span className={`text-[10px] border rounded-full px-2 py-0.5 ${hasSurvivor ? 'text-orange border-orange/40' : 'border-line text-muted'}`}>
+        <span className={`text-[10px] border rounded-full px-2.5 py-1 font-semibold ${hasSurvivor ? 'text-amber border-amber/40 bg-amber/5' : 'border-line text-muted'}`}>
           {hasSurvivor ? '◆ SIGNAL DETECTED' : 'NO SIGNAL'}
         </span>
       </div>
       <div className="p-3 space-y-3">
         {hasSurvivor && (
-          <div className="border border-orange/30 bg-[#2a2119] rounded-lg p-3">
-            <p className="text-orange text-[11px] font-bold">◆ POSSIBLE SURVIVOR SIGNATURE</p>
+          <div className="border border-amber/30 bg-[#2a2119] rounded-lg p-3">
+            <p className="text-amber text-[11px] font-bold">◆ POSSIBLE SURVIVOR SIGNATURE</p>
             <p className="text-[10px] text-[#c7b7a4] mt-1">
               Simulated heat and acoustic indicators detected. This is a training event — not a real-world detection.
             </p>

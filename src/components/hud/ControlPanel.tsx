@@ -9,9 +9,9 @@ function Btn({ children, onClick, variant = 'default', disabled = false, classNa
   const base = 'border rounded-lg px-3 py-2 text-[12px] font-semibold cursor-pointer transition-all duration-100 disabled:opacity-40 disabled:cursor-not-allowed'
   const styles: Record<string, string> = {
     default:  'border-line bg-[#1b2a38] text-rx-text hover:border-cyan',
-    primary:  'border-orange bg-orange text-[#1b1208] hover:opacity-90',
+    primary:  'border-amber bg-amber text-[#1b1208] hover:opacity-90',
     danger:   'border-[#73323b] bg-[#3a1d24] text-[#ffb4b5] hover:border-red',
-    warn:     'border-orange/50 bg-[#2a2010] text-orange hover:border-orange',
+    warn:     'border-amber/50 bg-[#2a2010] text-amber hover:border-amber',
   }
   return (
     <button className={`${base} ${styles[variant]} ${className}`} onClick={onClick} disabled={disabled}>

@@ -12,27 +12,41 @@ import FaultBanner from './components/hud/FaultBanner'
 const RescueViewport3D = lazy(() => import('./components/simulation/RescueViewport3D'))
 
 function Header({ phase }: { phase: string }) {
-  const online = phase !== 'FAULT'
+  const isFault   = phase === 'FAULT'
+  const isStopped = phase === 'STOPPED'
+  const statusColor = isFault || isStopped ? 'text-amber' : 'text-green'
+  const dotColor    = isFault || isStopped ? 'bg-amber'   : 'bg-green'
+  const statusLabel = isFault ? 'FAULT ACTIVE' : isStopped ? 'E-STOP' : 'SIMULATION ONLINE'
+
   return (
-    <header className="h-16 border-b border-line bg-[#0d141c] sticky top-0 z-30 flex items-center justify-between px-4 md:px-6 shrink-0">
+    <header className="h-16 border-b border-line bg-panel sticky top-0 z-30 flex items-center justify-between px-4 md:px-6 shrink-0">
+      {/* brand */}
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 border-2 border-orange flex items-center justify-center font-black text-orange rotate-45 rounded-lg shrink-0">
-          <span className="-rotate-45 text-sm">R</span>
-        </div>
+        <img src="/logo.png" alt="RUBBLE-X logo" className="w-9 h-9 rounded-lg object-contain shrink-0" />
         <div>
-          <strong className="tracking-[2px] text-[15px] text-rx-text">RUBBLE-X</strong>
-          <small className="block text-muted text-[9px] tracking-[1.8px]">RESCUE COMMAND SYSTEM</small>
+          <strong className="tracking-[2px] text-[15px] text-rx-text font-black">RUBBLE-X</strong>
+          <small className="block text-muted text-[9px] tracking-[1.8px] uppercase">Rescue Command System</small>
         </div>
       </div>
-      <div className="flex items-center gap-3 md:gap-5 text-[11px] text-muted">
-        <span className={online ? 'text-green' : 'text-orange'}>
-          <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 ${online ? 'bg-green' : 'bg-orange'}`} />
-          {online ? 'SIMULATION ONLINE' : 'FAULT ACTIVE'}
+
+      {/* status chips */}
+      <div className="flex items-center gap-2 md:gap-4 text-[11px]">
+        {/* online/fault chip */}
+        <span className={`flex items-center gap-1.5 border rounded-full px-2.5 py-1 text-[10px] font-semibold ${statusColor} border-current/30 bg-current/5`}>
+          <span className={`inline-block w-1.5 h-1.5 rounded-full ${dotColor} animate-pulse`} />
+          {statusLabel}
         </span>
-        <span className="hidden sm:block">MISSION RX-042</span>
-        <span className="hidden md:block">OPERATOR CONSOLE</span>
-        <span className="hidden lg:block border border-line rounded-full px-2 py-0.5 text-[10px] text-muted">
-          PROTOTYPE — SIMULATED
+        {/* mission id */}
+        <span className="hidden sm:flex items-center gap-1.5 border border-line rounded-full px-2.5 py-1 text-[10px] text-muted">
+          <span className="text-cyan">◈</span> MISSION RX-042
+        </span>
+        {/* operator */}
+        <span className="hidden md:flex items-center gap-1.5 border border-line rounded-full px-2.5 py-1 text-[10px] text-muted">
+          <span className="text-green">◉</span> OPERATOR CONSOLE
+        </span>
+        {/* prototype badge */}
+        <span className="hidden lg:flex items-center gap-1.5 border border-amber/40 rounded-full px-2.5 py-1 text-[10px] text-amber bg-amber/5">
+          ⚠ PROTOTYPE · SIMULATED
         </span>
       </div>
     </header>
@@ -58,7 +72,7 @@ export default function App() {
                 <div className="text-[9px] text-muted tracking-widest uppercase mb-0.5">LIVE SIMULATION / SECTOR 04</div>
                 <h2 className="text-[11px] font-semibold tracking-[1.4px] uppercase">01 / Live Environment Simulation</h2>
               </div>
-              <span className={`text-[10px] border rounded-full px-2 py-0.5 ${state.robot.bodyMode === 'COMPACT' ? 'text-cyan border-cyan/40' : 'text-orange border-orange/40'}`}>
+              <span className={`text-[10px] border rounded-full px-2.5 py-1 font-semibold ${state.robot.bodyMode === 'COMPACT' ? 'text-cyan border-cyan/40 bg-cyan/5' : 'text-amber border-amber/40 bg-amber/5'}`}>
                 {state.robot.bodyMode} MODE
               </span>
             </div>

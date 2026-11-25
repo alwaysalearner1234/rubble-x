@@ -69,11 +69,11 @@ export default function TacticalMap({ state }: Props) {
       const detected = state.survivors.some(s => s.id === b.id)
       const [bx, cy2] = worldToCanvas(b.position[0], b.position[2], cw, ch)
       ctx.beginPath(); ctx.arc(bx, cy2, 5, 0, Math.PI * 2)
-      ctx.fillStyle = detected ? '#ff9d42' : '#8b6a3a'; ctx.fill()
+      ctx.fillStyle = detected ? '#F59E0B' : '#8b6a3a'; ctx.fill()
       if (detected) {
-        ctx.strokeStyle = '#ff9d42'; ctx.lineWidth = 2
+        ctx.strokeStyle = '#FF9D42'; ctx.lineWidth = 2
         ctx.beginPath(); ctx.arc(bx, cy2, 9, 0, Math.PI * 2); ctx.stroke()
-        ctx.fillStyle = '#ff9d42'; ctx.font = '9px Inter,sans-serif'
+        ctx.fillStyle = '#FF9D42'; ctx.font = '9px Inter,sans-serif'
         ctx.fillText('POSSIBLE SURVIVOR', bx + 11, cy2 + 3)
       }
     })

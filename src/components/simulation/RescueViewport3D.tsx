@@ -10,10 +10,22 @@ import * as THREE from 'three'
 import type { MissionState } from '../../types/rubblex'
 import { OBSTACLES, HAZARD_ZONES, NARROW_PASSAGES, SURVIVOR_BEACONS, WORLD_HALF, ROBOT_BODY } from '../../simulation/worldConfig'
 
+// ---- Figma design tokens (mirror tailwind.config.js) ----
+const T = {
+  cyan:   '#38BDF8',  // sky-400
+  amber:  '#F59E0B',  // amber-400
+  red:    '#EF4444',  // red-500
+  green:  '#10B981',  // emerald-500
+  bg:     '#0B1117',
+  panel:  '#111922',
+  line:   '#1E3040',
+  muted:  '#91a2b3',
+}
+
 // ---- Rubble slab ----
 function RubbleSlab({ obs }: { obs: (typeof OBSTACLES)[0] }) {
-  const color = obs.unstable ? '#c0683a' : '#4a5a65'
-  const edgeColor = obs.unstable ? '#ff9d42' : '#697780'
+  const color     = obs.unstable ? '#c0683a' : '#4a5a65'
+  const edgeColor = obs.unstable ? T.amber   : '#697780'
   return (
     <group position={obs.position}>
       <mesh receiveShadow castShadow>
@@ -26,7 +38,7 @@ function RubbleSlab({ obs }: { obs: (typeof OBSTACLES)[0] }) {
       </lineSegments>
       {obs.unstable && (
         <Html center distanceFactor={6} style={{ pointerEvents: 'none', userSelect: 'none' }}>
-          <div style={{ color: '#ff9d42', fontSize: 11, fontWeight: 700, background: '#1a1200cc', padding: '2px 5px', borderRadius: 4, whiteSpace: 'nowrap' }}>
+          <div style={{ color: T.amber, fontSize: 11, fontWeight: 700, background: '#1a1200cc', padding: '2px 5px', borderRadius: 4, whiteSpace: 'nowrap' }}>
             ⚠ UNSTABLE
           </div>
         </Html>
@@ -39,23 +51,20 @@ function RubbleSlab({ obs }: { obs: (typeof OBSTACLES)[0] }) {
 function NarrowPassage({ passage }: { passage: (typeof NARROW_PASSAGES)[0] }) {
   return (
     <group position={passage.position}>
-      {/* left wall */}
       <mesh position={[-passage.size[0] / 2 - 0.1, 0, 0]}>
         <boxGeometry args={[0.2, passage.size[1] * 2, passage.size[2]]} />
         <meshStandardMaterial color="#2d4050" roughness={1} transparent opacity={0.7} />
       </mesh>
-      {/* right wall */}
       <mesh position={[passage.size[0] / 2 + 0.1, 0, 0]}>
         <boxGeometry args={[0.2, passage.size[1] * 2, passage.size[2]]} />
         <meshStandardMaterial color="#2d4050" roughness={1} transparent opacity={0.7} />
       </mesh>
-      {/* ceiling */}
       <mesh position={[0, passage.size[1], 0]}>
         <boxGeometry args={[passage.size[0] + 0.4, 0.15, passage.size[2]]} />
         <meshStandardMaterial color="#3a4f5c" roughness={1} />
       </mesh>
       <Html center distanceFactor={5} position={[0, passage.size[1] + 0.4, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{ color: '#48d6e8', fontSize: 10, background: '#0b1016cc', padding: '2px 6px', borderRadius: 4, whiteSpace: 'nowrap' }}>
+        <div style={{ color: T.cyan, fontSize: 10, background: `${T.bg}cc`, padding: '2px 6px', borderRadius: 4, whiteSpace: 'nowrap' }}>
           COMPACT MODE REQUIRED
         </div>
       </Html>
@@ -76,10 +85,10 @@ function HazardZone({ hz }: { hz: (typeof HAZARD_ZONES)[0] }) {
     <group position={hz.position}>
       <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[hz.radius, 32]} />
-        <meshStandardMaterial color="#ff5e62" transparent opacity={0.2} depthWrite={false} />
+        <meshStandardMaterial color={T.red} transparent opacity={0.2} depthWrite={false} />
       </mesh>
       <Html center distanceFactor={6} style={{ pointerEvents: 'none' }}>
-        <div style={{ color: '#ff5e62', fontSize: 11, fontWeight: 700, background: '#1a0000cc', padding: '2px 5px', borderRadius: 4 }}>
+        <div style={{ color: T.red, fontSize: 11, fontWeight: 700, background: '#1a0000cc', padding: '2px 5px', borderRadius: 4 }}>
           ▲ HAZARD
         </div>
       </Html>
@@ -102,15 +111,15 @@ function SurvivorBeacon({ beacon, detected }: { beacon: (typeof SURVIVOR_BEACONS
       {/* thermal shimmer ring */}
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.6, 0.9, 32]} />
-        <meshStandardMaterial color="#ff9d42" transparent opacity={detected ? 0.5 : 0.15} depthWrite={false} />
+        <meshStandardMaterial color={T.amber} transparent opacity={detected ? 0.5 : 0.15} depthWrite={false} />
       </mesh>
       <mesh ref={meshRef}>
         <octahedronGeometry args={[0.3, 0]} />
-        <meshStandardMaterial color={detected ? '#ff9d42' : '#8b6a3a'} emissive="#ff6600" emissiveIntensity={0.4} />
+        <meshStandardMaterial color={detected ? T.amber : '#8b6a3a'} emissive="#ff6600" emissiveIntensity={0.4} />
       </mesh>
       {detected && (
         <Html center distanceFactor={5} position={[0, 1.1, 0]} style={{ pointerEvents: 'none' }}>
-          <div style={{ color: '#ff9d42', fontSize: 11, fontWeight: 700, background: '#1a0d00cc', padding: '3px 7px', borderRadius: 4, whiteSpace: 'nowrap', border: '1px solid #ff9d4255' }}>
+          <div style={{ color: T.amber, fontSize: 11, fontWeight: 700, background: '#1a0d00cc', padding: '3px 7px', borderRadius: 4, whiteSpace: 'nowrap', border: `1px solid ${T.amber}44` }}>
             ◆ POSSIBLE SURVIVOR
           </div>
         </Html>
@@ -122,12 +131,12 @@ function SurvivorBeacon({ beacon, detected }: { beacon: (typeof SURVIVOR_BEACONS
 // ---- Robot body ----
 function RobotMesh({ state }: { state: MissionState }) {
   const groupRef = useRef<THREE.Group>(null)
-  const armRef = useRef<THREE.Mesh>(null)
+  const armRef   = useRef<THREE.Mesh>(null)
   const { robot } = state
   const { x, y, z, heading } = robot.position
-  const compact = robot.bodyMode === 'COMPACT'
-  const dims = compact ? ROBOT_BODY.COMPACT : ROBOT_BODY.EXPLORATION
-  const bodyColor = robot.stopped ? '#ff5e62' : robot.fault ? '#ff9d42' : '#48d6e8'
+  const compact   = robot.bodyMode === 'COMPACT'
+  const dims      = compact ? ROBOT_BODY.COMPACT : ROBOT_BODY.EXPLORATION
+  const bodyColor = robot.stopped ? T.red : robot.fault ? T.amber : T.cyan
 
   useFrame(() => {
     if (groupRef.current) {
@@ -162,25 +171,25 @@ function RobotMesh({ state }: { state: MissionState }) {
         <boxGeometry args={[0.14, dims.halfH * 0.6, dims.halfD * 1.8]} />
         <meshStandardMaterial color="#2a3a44" roughness={1} />
       </mesh>
-      {/* manipulator arm (not compact) */}
+      {/* manipulator arm — EXPLORATION mode only */}
       {!compact && (
         <group position={[0, dims.halfH * 0.5, -dims.halfD]}>
           <mesh ref={armRef} position={[0, 0, -0.4]}>
             <boxGeometry args={[0.08, 0.08, 0.8]} />
-            <meshStandardMaterial color="#48d6e8" metalness={0.8} roughness={0.2} />
+            <meshStandardMaterial color={T.cyan} metalness={0.8} roughness={0.2} />
           </mesh>
           <mesh position={[0, 0, robot.armExtended ? -1.0 : -0.1]}>
             <coneGeometry args={[0.07, 0.18, 8]} />
-            <meshStandardMaterial color="#ff9d42" metalness={0.5} />
+            <meshStandardMaterial color={T.amber} metalness={0.5} />
           </mesh>
         </group>
       )}
       {/* glow point light */}
       <pointLight color={bodyColor} intensity={1.2} distance={3} />
-      {/* label */}
+      {/* HUD label */}
       <Html center distanceFactor={6} position={[0, dims.halfH + 0.5, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{ color: bodyColor, fontSize: 10, fontWeight: 700, background: '#0b1016cc', padding: '1px 5px', borderRadius: 3, whiteSpace: 'nowrap' }}>
-          RUBBLE-X
+        <div style={{ color: bodyColor, fontSize: 10, fontWeight: 700, background: `${T.bg}cc`, padding: '1px 5px', borderRadius: 3, whiteSpace: 'nowrap' }}>
+          RUBBLE-X · {robot.bodyMode}
         </div>
       </Html>
     </group>
@@ -191,7 +200,7 @@ function RobotMesh({ state }: { state: MissionState }) {
 function ExploredPath({ history }: { history: [number, number, number][] }) {
   if (history.length < 2) return null
   const points = history.map(([x, y, z]) => new THREE.Vector3(x, y + 0.05, z))
-  return <Line points={points} color="#48d6e860" lineWidth={1.5} />
+  return <Line points={points} color={`${T.cyan}80`} lineWidth={1.5} />
 }
 
 // ---- Floor grid ----
@@ -202,17 +211,17 @@ function FloorGrid() {
         <planeGeometry args={[WORLD_HALF * 2, WORLD_HALF * 2, 24, 24]} />
         <meshStandardMaterial color="#131e28" roughness={1} />
       </mesh>
-      <gridHelper args={[WORLD_HALF * 2, 24, '#1e3040', '#1e3040']} position={[0, 0.01, 0]} />
+      <gridHelper args={[WORLD_HALF * 2, 24, T.line, T.line]} position={[0, 0.01, 0]} />
     </>
   )
 }
 
-// ---- Keyboard handler (attached to canvas) ----
-function KeyboardControls({ state }: { state: MissionState }) {
+// ---- Keyboard controls (W/A/S/D · Q/E rotate · Space E-stop) ----
+function KeyboardControls({ state: _state }: { state: MissionState }) {
   const { gl } = useThree()
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement) return
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
       const key = e.key.toLowerCase()
       const map: Record<string, () => void> = {
         w: () => { import('../../simulation/missionStore').then(m => m.store.move('forward')) },
@@ -231,7 +240,7 @@ function KeyboardControls({ state }: { state: MissionState }) {
   return null
 }
 
-// ---- Scene ----
+// ---- Scene root ----
 function Scene({ state }: { state: MissionState }) {
   const detectedBeacons = new Set(state.survivors.map(s => s.id))
   return (
@@ -240,12 +249,12 @@ function Scene({ state }: { state: MissionState }) {
       <directionalLight position={[8, 12, 8]} intensity={0.8} castShadow shadow-mapSize={[1024, 1024]} />
       <pointLight position={[-8, 6, -8]} intensity={0.4} color="#4466ff" />
       <FloorGrid />
-      {OBSTACLES.map(obs => <RubbleSlab key={obs.id} obs={obs} />)}
-      {NARROW_PASSAGES.map(p => <NarrowPassage key={p.id} passage={p} />)}
-      {HAZARD_ZONES.map(hz => <HazardZone key={hz.id} hz={hz} />)}
-      {SURVIVOR_BEACONS.map(b => <SurvivorBeacon key={b.id} beacon={b} detected={detectedBeacons.has(b.id)} />)}
-      {state.robot.deployed && <RobotMesh state={state} />}
-      {state.robot.deployed && <ExploredPath history={state.robot.pathHistory} />}
+      {OBSTACLES.map(obs     => <RubbleSlab    key={obs.id}    obs={obs}                               />)}
+      {NARROW_PASSAGES.map(p => <NarrowPassage key={p.id}      passage={p}                             />)}
+      {HAZARD_ZONES.map(hz   => <HazardZone    key={hz.id}     hz={hz}                                 />)}
+      {SURVIVOR_BEACONS.map(b => <SurvivorBeacon key={b.id}    beacon={b} detected={detectedBeacons.has(b.id)} />)}
+      {state.robot.deployed  && <RobotMesh state={state} />}
+      {state.robot.deployed  && <ExploredPath history={state.robot.pathHistory} />}
       <OrbitControls makeDefault minDistance={3} maxDistance={30} maxPolarAngle={Math.PI / 2.1} />
       <GizmoHelper alignment="bottom-right" margin={[60, 60]}>
         <GizmoViewport />
@@ -255,10 +264,10 @@ function Scene({ state }: { state: MissionState }) {
   )
 }
 
-// ---- Public component ----
+// ---- Public export ----
 export default function RescueViewport3D({ state }: { state: MissionState }) {
   return (
-    <div style={{ width: '100%', height: '100%', background: '#0b1016', borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
+    <div style={{ width: '100%', height: '100%', background: T.bg, borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
       <Canvas
         shadows
         camera={{ position: [-5, 10, 14], fov: 52 }}
@@ -268,22 +277,24 @@ export default function RescueViewport3D({ state }: { state: MissionState }) {
           <Scene state={state} />
         </Suspense>
       </Canvas>
+
       {/* overlay badges */}
       <div style={{ position: 'absolute', top: 10, left: 12, display: 'flex', gap: 7, flexWrap: 'wrap', pointerEvents: 'none' }}>
-        <span style={{ fontSize: 10, border: '1px solid #285b4a', borderRadius: 99, padding: '3px 8px', color: '#53d69a', background: '#0b1016cc' }}>
+        <span style={{ fontSize: 10, border: `1px solid ${T.green}55`, borderRadius: 99, padding: '3px 8px', color: T.green, background: `${T.bg}cc` }}>
           ● ENVIRONMENT SIMULATED
         </span>
-        <span style={{ fontSize: 10, border: '1px solid #263746', borderRadius: 99, padding: '3px 8px', color: '#91a2b3', background: '#0b1016cc' }}>
+        <span style={{ fontSize: 10, border: `1px solid ${T.line}`, borderRadius: 99, padding: '3px 8px', color: T.muted, background: `${T.bg}cc` }}>
           W/A/S/D MOVE · Q/E ROTATE · SPACE E-STOP
         </span>
       </div>
+
       {/* legend */}
-      <div style={{ position: 'absolute', bottom: 10, left: 12, display: 'flex', gap: 12, background: '#0b1016dd', padding: '5px 10px', border: '1px solid #263746', borderRadius: 6, fontSize: 10, color: '#91a2b3', pointerEvents: 'none', flexWrap: 'wrap' }}>
+      <div style={{ position: 'absolute', bottom: 10, left: 12, display: 'flex', gap: 12, background: `${T.bg}dd`, padding: '5px 10px', border: `1px solid ${T.line}`, borderRadius: 6, fontSize: 10, color: T.muted, pointerEvents: 'none', flexWrap: 'wrap' }}>
         <span style={{ color: '#4a5a65' }}>▰ RUBBLE</span>
         <span style={{ color: '#c0683a' }}>▰ UNSTABLE</span>
-        <span style={{ color: '#48d6e8' }}>● ROBOT</span>
-        <span style={{ color: '#ff9d42' }}>◆ POSSIBLE SURVIVOR</span>
-        <span style={{ color: '#ff5e62' }}>▲ HAZARD</span>
+        <span style={{ color: T.cyan  }}>● ROBOT</span>
+        <span style={{ color: T.amber }}>◆ POSSIBLE SURVIVOR</span>
+        <span style={{ color: T.red   }}>▲ HAZARD</span>
       </div>
     </div>
   )

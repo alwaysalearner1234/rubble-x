@@ -8,7 +8,7 @@ export default function FaultBanner({ state }: Props) {
   if (!robot.stopped && !robot.fault && missionPhase !== 'STOPPED') return null
 
   const isFault = robot.fault !== null
-  const color = isFault ? 'border-orange/60 bg-[#2a1a00] text-orange' : 'border-red/60 bg-[#3a0a0a] text-red'
+  const color = isFault ? 'border-amber/60 bg-[#2a1a00] text-amber' : 'border-red/60 bg-[#3a0a0a] text-red'
   const label = isFault
     ? `⚠ FAULT: ${robot.fault?.replace('_', ' ')} — Movement and scanning disabled.`
     : '⬛ EMERGENCY STOP ENGAGED — Movement and scanning disabled.'

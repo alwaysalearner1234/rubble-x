@@ -16,6 +16,17 @@ Status convention: `[ ]` not started, `[x]` completed only after implementation 
 
 ## Completed in this implementation
 
+- Figma tokens applied throughout: `#0B1117` bg, `#111922` panel, `#F59E0B` amber/warnings, `#38BDF8` cyan/robot, `#10B981` green/online, `#EF4444` red/danger, Inter font
+- `public/logo.png` wired into header (`<img>`) and `index.html` favicon (`<link rel="icon">`)
+- Icon+label status chips in header (online/fault/mission/operator/prototype)
+- Amber-bordered Human Approval modal (`border-2 border-amber` + amber glow shadow)
+- `SIMULATED` / `SIM` badges on every sensor card and sensor panel header
+- All HUD colour references updated to Figma tokens (Tailwind classes + inline style values)
+- 3D scene T-token object; all Three.js colours use `T.cyan`, `T.amber`, `T.red`, `T.green`
+- `npm run build` passes with zero TypeScript or bundling errors
+
+## Completed in this implementation
+
 - Vite + React 18 + TypeScript + Tailwind CSS + Three.js / @react-three/fiber / @react-three/drei scaffold
 - Shared state contracts: `src/types/rubblex.ts`
 - World geometry config: `src/simulation/worldConfig.ts` (obstacles, hazards, passages, survivor beacons)

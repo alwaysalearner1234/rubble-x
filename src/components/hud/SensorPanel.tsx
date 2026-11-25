@@ -3,10 +3,10 @@ import type { MissionState, SensorReading } from '../../types/rubblex'
 interface Props { state: MissionState }
 
 function statusColor(status: SensorReading['status']) {
-  if (status === 'SIGNAL' || status === 'PATTERN') return '#ff9d42'
-  if (status === 'WARNING') return '#ff5e62'
-  if (status === 'ERROR') return '#ff5e62'
-  if (status === 'ACTIVE') return '#48d6e8'
+  if (status === 'SIGNAL' || status === 'PATTERN') return '#F59E0B'  // amber
+  if (status === 'WARNING') return '#EF4444'  // red
+  if (status === 'ERROR')   return '#EF4444'  // red
+  if (status === 'ACTIVE')  return '#38BDF8'  // cyan
   return '#91a2b3'
 }
 

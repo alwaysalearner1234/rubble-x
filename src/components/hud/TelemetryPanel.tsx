@@ -14,7 +14,7 @@ function Metric({ label, value, sub }: { label: string; value: string | number; 
 
 export default function TelemetryPanel({ state }: Props) {
   const { robot, missionPhase } = state
-  const phaseColor = missionPhase === 'STOPPED' || missionPhase === 'FAULT' ? 'text-red' : missionPhase === 'ALERT' ? 'text-orange' : robot.deployed ? 'text-green' : 'text-muted'
+  const phaseColor = missionPhase === 'STOPPED' || missionPhase === 'FAULT' ? 'text-red' : missionPhase === 'ALERT' ? 'text-amber' : robot.deployed ? 'text-green' : 'text-muted'
   const phaseLabel = robot.fault ? `FAULT: ${robot.fault}` : missionPhase
   return (
     <section className="bg-panel border border-line rounded-xl overflow-hidden">
